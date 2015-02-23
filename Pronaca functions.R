@@ -8,7 +8,7 @@ lapply(libs, require, character.only = T)
 source("RenseNieFwdSel.R")
 #################
 #Statistical tests, one RE------
-my.t.smallmix<- function(df,x,y,random.eff, y_cat) {
+my.t.smallmix<- function(df,x,y,random.eff, y_cat, odds_ratios=TRUE) {
  #assign variables
  df$y <- df[[y]]
  df$x <- df[[x]]
@@ -28,6 +28,10 @@ my.t.smallmix<- function(df,x,y,random.eff, y_cat) {
  }
   else {
    mix_cat.sum=summary(mix_cat)
+   if(odds_ratios==TRUE){
+    mix_cat.sum$coefficients[,c(1,2)]=exp(mix_cat.sum$coefficients[,c(1,2)])
+    attributes(mix_cat.sum$coefficients)$dimnames[[2]][1]="Odds Ratio"
+   }
    mix_cat.anova=Anova(mix_cat)
    # assembling the output as list of two table
    out.mix <- prettyNum(c(mix.sum$coefficients[1,1],mix.sum$coefficients[2,1],mix.anova$P,mix.sum$AICtab[1],length(mix.sum$ngrps),mix_cat.anova$P,mix_cat.sum$AICtab[1],length(mix_cat.sum$ngrps)  ))               
@@ -39,7 +43,7 @@ my.t.smallmix<- function(df,x,y,random.eff, y_cat) {
 
 ################
 
-my.t.bigmixCross<- function(df,x,y,random.eff, random.effBig, y_cat) {
+my.t.bigmixCross<- function(df,x,y,random.eff, random.effBig, y_cat, odds_ratios=TRUE) {
  #assign variables
  df$y <- df[[y]]
  df$x <- df[[x]]
@@ -47,7 +51,7 @@ my.t.bigmixCross<- function(df,x,y,random.eff, random.effBig, y_cat) {
  df$random.eff<-df[[random.eff]]
  df$random.effBig<-df[[random.effBig]]
  df$y_cat<-df[[y_cat]]
- if(random.eff=="sample_id") df$random.eff=substr(df$random.eff,1,4) #this is tupid, but to make sure effects are truly crossed....
+ #if(random.eff=="sample_id") df$random.eff=substr(df$random.eff,1,4) #this is tupid, but to make sure effects are truly crossed....
  
  #continuous variables: run anova with 2 crossed REs
  mix <-try(lmer(y ~ x + (1|random.eff) + (1|random.effBig) ,data=df,REML=FALSE),
@@ -67,6 +71,10 @@ my.t.bigmixCross<- function(df,x,y,random.eff, random.effBig, y_cat) {
    stop("No bueno")
   }
    mix_cat.sum=summary(mix_cat)
+   if(odds_ratios==TRUE){
+    mix_cat.sum$coefficients[,c(1,2)]=exp(mix_cat.sum$coefficients[,c(1,2)])
+    attributes(mix_cat.sum$coefficients)$dimnames[[2]][1]="Odds Ratio"
+   }
    mix_cat.anova=Anova(mix_cat)
   # assembling the output as list of two table
    out.mix <- prettyNum(c(mix.sum$coefficients[1,1],mix.sum$coefficients[2,1],mix.anova$P,mix.sum$AICtab[1],length(mix.sum$ngrps),mix_cat.anova$P,mix_cat.sum$AICtab[1],length(mix_cat.sum$ngrps)  ))               
@@ -79,7 +87,7 @@ my.t.bigmixCross<- function(df,x,y,random.eff, random.effBig, y_cat) {
 
 ################
 
-my.t.bigmixNest<- function(df,x,y,random.eff, random.effBig, y_cat) {
+my.t.bigmixNest<- function(df,x,y,random.eff, random.effBig, y_cat, odds_ratios=TRUE) {
  #assign variables
  df$y <- df[[y]]
  df$x <- df[[x]]
@@ -110,10 +118,15 @@ my.t.bigmixNest<- function(df,x,y,random.eff, random.effBig, y_cat) {
  }
  else {
   mix_cat.sum=summary(mix_cat)
+  if(odds_ratios==TRUE){
+   mix_cat.sum$coefficients[,c(1,2)]=exp(mix_cat.sum$coefficients[,c(1,2)])
+   attributes(mix_cat.sum$coefficients)$dimnames[[2]][1]="Odds Ratio"
+  }
   mix_cat.anova=Anova(mix_cat)
   # assembling the output as list of two table
   out.mix <- c(mix.sum$coefficients[1,1],mix.sum$coefficients[2,1],mix.anova$P,mix.sum$AICtab[1],length(mix.sum$ngrps),mix_cat.anova$P,mix_cat.sum$AICtab[1],length(mix_cat.sum$ngrps)  )               
   names(out.mix)= c("Intercept","Effect size", "GLMManovaP", "AICanova", "REsanova","GLMMlogitP", "AIClogit","REslogit") 
+  
   return(list(Tab=out.mix, Sum = mix.sum, SumCat=mix_cat.sum, Mod=mix, ModCat=mix_cat))
  }
 }
@@ -140,8 +153,8 @@ my.star.mix <- function (p.table) {
 
 
 #data for labelling continuous values (P-values from NLM model)
-#UNIVARIATE -----------
-my.mod.list=function(df, x, y, by_var, random.eff, random.effBig, y_cat, nest_mod=TRUE, always_nest=FALSE){
+#UNIVARIATE MODEL SELECTION-----------
+my.mod.list=function(df, x, y, by_var, random.eff, random.effBig, y_cat, nest_mod=FALSE, always_nest=FALSE){
  df$y <- df[[y]]
  df$x <- df[[x]]
  df$by_var <- df[[by_var]]
@@ -200,7 +213,87 @@ my.mod.list=function(df, x, y, by_var, random.eff, random.effBig, y_cat, nest_mo
 }
 
 #MULTIVARIATE MODEL SELECTION LME4------
-#http://www.rensenieuwenhuis.nl/r-sessions-32/
+
+my.MVmod.list=function(df,formula, fixed_vars, by_var, random.eff,random.effBig, odds_ratios=TRUE){
+ df$by_var <- df[[by_var]]
+ df$random.eff<-df[[random.eff]]
+ df$random.effBig<-df[[random.effBig]]
+ 
+ outlist <- sapply(levels(df$by_var),function(x) NULL)
+ #had to use a loop b/c ddply kept giving errors!!!!
+ options(na.action = "na.fail")
+ for(drug in levels(droplevels(df$by_var))){
+  df_sub=df[df$by_var==drug,]
+  bestModSum=NA
+  bestModSum<-try({
+   gloMod <- glmer(as.formula(formula), data=df_sub, family=binomial,na.action = "na.fail")
+   gloMod@call$formula <- formula
+   gloMod@call$data <- df_sub
+   dredgeProc=dredge(gloMod,fixed=fixed_vars)
+   bestMod= get.models(dredgeProc, 1)[[1]]
+   bestModSum= summary(bestMod)
+   })
+  if(class(bestModSum)=="try-error") outlist[[drug]]=NA
+  else{
+   #remove long call string, replace w title
+    bestModSum$call$control=paste("fixed vars:", paste0(fixed_vars, 
+                                                                       collapse=","), 
+                                  "; initial model:",as.character(formula))
+    bestModSum$call[3]=paste(toupper(drug))
+    #convert to ORs
+   if(odds_ratios==TRUE){
+    bestModSum$coefficients[,c(1,2)]=exp(bestModSum$coefficients[,c(1,2)])
+    attributes(bestModSum$coefficients)$dimnames[[2]][1]="Odds Ratio"
+   }
+   #plots
+    FEPlot=sjp.glmer(bestMod,type="fe",title=paste("Fixed effects,",drug), 
+                     fade.ns=TRUE,showPValueLabels=TRUE, printPlot=FALSE)
+    REPlot=sjp.glmer(bestMod,type="re",title=paste("Random effects,",drug), 
+                     fade.ns=TRUE,showPValueLabels=TRUE, printPlot=FALSE) 
+   outlist[[drug]]$bestModSum <-bestModSum
+   #outlist[[drug]]$allMods <-dredgeProc
+   outlist[[drug]]$FEPlot <-FEPlot
+   outlist[[drug]]$REPlot <-REPlot
+  }
+ }
+ options(na.action = "na.omit")
+ return(outlist)
+}
+#  
+#  out=dlply(df, .(by_var),
+#            function(z) {
+#             bestModSum <- try({
+#              gloMod<-glmer(formula, data=z, family=binomial,na.action = "na.fail")
+#              dredgeProc=dredge(gloMod)
+#              bestMod= get.models(dredgeProc, 1)[[1]]
+#              summary(bestMod)  
+#            # })
+#              if(class(bestModSum)=="try-error") return(NA)
+#            # else{ 
+#              #get title string
+#              TitleStr=as.character(unique(z[[by_var]]))
+#              #convert to ORs
+#              if(odds_ratios==TRUE){
+#               bestModSum$coefficients[,c(1,2)]=exp(bestModSum$coefficients[,c(1,2)])
+#               attributes(bestModSum$coefficients)$dimnames[[2]][1]="Odds Ratio"
+#              }
+#              #remove long call string, replace w title
+#              bestModSum$call$control=toupper(TitleStr)
+#              #plots
+#              FEPlot=sjp.glmer(bestMod,type="fe",title=paste("Fixed effects,",TitleStr), 
+#                             fade.ns=TRUE,showPValueLabels=TRUE, printPlot=FALSE)
+#              REPlot=sjp.glmer(bestMod,type="re",title=paste("Random effects,",TitleStr), 
+#                               fade.ns=TRUE,showPValueLabels=TRUE, printPlot=FALSE)
+#              #return list
+#              list(bestModSum=bestModSum, allMods=dredgeProc, FEPlot=FEPlot, REPlot=REPlot)
+#            }
+#            }
+#            
+#           )
+#  return(out)
+# }
+
+
 
 
 #create table wiht position for labels
@@ -210,7 +303,6 @@ my.mod.list=function(df, x, y, by_var, random.eff, random.effBig, y_cat, nest_mo
 # 
 # #data for labelling categorical variables (%R and Chi-sq test)
 df.sum.cat<- function(df, x1, y_cat, by_var, random.eff){
- df$y <- df[[y]]
  df$x1 <- df[[x1]]
  df$by_var <- df[[by_var]]
  df$random.eff<-df[[random.eff]]
@@ -228,7 +320,6 @@ df.sum.cat<- function(df, x1, y_cat, by_var, random.eff){
 }
 
 df.sum.cat2<- function(df, x1, x2, y_cat, by_var, random.eff){
- df$y <- df[[y]]
  df$x1 <- df[[x1]]
  df$x2 <- df[[x2]]
  df$by_var <- df[[by_var]]
@@ -269,7 +360,6 @@ df.sum.cat2<- function(df, x1, x2, y_cat, by_var, random.eff){
 # BAR CHARTS-------
 
 my.barChart.single <- function(df, x1, y_cat, by_var, random.eff, title=""){
- df$y <- df[[y]]
  df$x1 <- df[[x1]]
  df$by_var <- df[[by_var]]
  df$random.eff<-df[[random.eff]]
@@ -295,7 +385,6 @@ my.barChart.single <- function(df, x1, y_cat, by_var, random.eff, title=""){
 ######
 
 my.barChart.double <- function(df, x1, x2, y_cat, by_var, random.eff, title="", bar_position="dodge"){
- df$y <- df[[y]]
  df$x1 <- df[[x1]]
  df$x2 <- df[[x2]]
  df$by_var <- df[[by_var]]
@@ -341,7 +430,7 @@ Plot+
 
 # 
 # ##Density plot w annotations
-my.plotDens <- function(df, x1, y_cat, by_var, random.eff, title=""){
+my.plotDens <- function(df, x1, y, y_cat, by_var, random.eff, title=""){
  df$y <- df[[y]]
  df$x1 <- df[[x1]]
  df$by_var <- df[[by_var]]
@@ -419,5 +508,3 @@ clrs.brew<- function(n=9,scheme="Blues"){
  colorRampPalette(brewer.pal(9,scheme))(n) 
 }
 clrs.hcl <- function(n) {                                                                                                                          hcl(h = seq(230, 0, length.out = n),                                                                                                                               c = 60, l = seq(10, 90, length.out = n),                                                                                                                             fixup = TRUE)                                                                                                                              }
-
-

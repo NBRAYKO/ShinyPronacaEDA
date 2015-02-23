@@ -30,7 +30,14 @@ shinyServer(function(input, output){
   adonis_strat<-reactive({input$adonis_strat})
   range_x<-reactive({input$range_x})
   range_y<-reactive({input$range_y})
-
+  pheno_main<-reactive({input$pheno_main})
+  fixed_main<-reactive({input$pheno_main})
+  time_int<-reactive({input$time_int})
+  int1_int<-reactive({input$int1_int})
+  tetAB_int<-reactive({input$tetAB_int})
+  REff<- reactive ({input$REff})
+  
+  
   Data <- reactive({  
        #if the outcome variable is not %R, but one of the genes:
        if (input$y_cat != "Res") {
@@ -42,10 +49,9 @@ shinyServer(function(input, output){
         #collapse at sample level for following varlist
         CollapseVars=c("drug_class","trial","dia", "sample_id", "tipo_muestra", "isolate_type", "num_pollos", "treat_full", "litter","int1", "tetAB", "qnrb", "sample_id", "pollo_id","isolate_code", "id" )
         CollapseForm=as.formula(paste("cbind(Res,Zone)","~",paste(CollapseVars, collapse="+")))
-        #dfLo=ddply(dfLo, CollapseVars,summarise,Res=max(Res))
         dfLo=aggregate(CollapseForm,data=dfLo,FUN=max)
         dfLo$Drug=dfLo$drug_class
-        if (input$y_cat != "Res") dfLo$Drug="All drugs"
+        if (input$y_cat != "Res") dfLo$Drug="All drugs" #set label to "all drugs" if collapsing
        }
        Data=dfLo[which(dfLo$trial%in%input$trial &
        dfLo$tipo_muestra %in% input$tipo_muestra &
@@ -99,11 +105,10 @@ shinyServer(function(input, output){
   
  # TAB1: Generate a kernel density plot f
  output$DensPlot <- renderPlot({
-  my.plotDens(Data(), x1(), y_cat(), by_var, random.eff, 
+  my.plotDens(Data(), x1(),y, y_cat(), by_var, random.eff, 
               title=paste(c("Zone kernel density, by"),x1()
                           ))
- },
- width = 500, height = 500)
+ }, width = 500, height = 500)
  
  # Generate bar graph for single-factor
  output$BarPlotSingle<- renderPlot({
@@ -117,8 +122,8 @@ shinyServer(function(input, output){
   my.barChart.single(Data(),x1(),y_cat(),by_var,random.eff, 
                      title=paste(c(TitleStr,", by"),x1()
                                  ))
- },
- width = 500, height = 500)
+ }, width = 500, height = 500)
+ 
  # Generate bar graph for 2-factor analysis
  output$BarPlotDouble<- renderPlot({
   #Switch title strings for the y_cat variable
@@ -132,10 +137,9 @@ shinyServer(function(input, output){
                      title=paste(c(TitleStr,", by"),x1(),"and", x2()
                                  ),
                      stacked())
- },
- width = 500, height = 500)
+ },width = 500, height = 500)
  
- #Tab1 MODELS-----
+ #Tab 2.1 univar modesl-----
  output$ModelSum <- renderPrint({
   # Take a dependency on input$goButton
   input$modelButton
@@ -155,10 +159,9 @@ shinyServer(function(input, output){
                       "Ciprofloxacin"="Fluoroquinolone", "Enrofloxacin" = "Fluoroquinolone",
                       "Streptomycin" = "Aminoglycoside", "Gentamicin" = "Aminoglycoside",
                       "Sulfisoxazole" = "Sulfonamide", "Trimethoprim" = "Sulfonamide")
-   modDrugSum=try(model[[Drug]]$ModCat$SumCat)
-   modDrugSum$SumCat$call=modDrugSum$SumCat$call[2]
   }
-  else modDrugSum=try(model[[Drug()]]$ModCat$SumCat)
+   modDrugSum=try(model[[Drug]]$ModCat$SumCat)
+
   if(class(modDrugSum)=="try-error"|is.na(modDrugSum)) tab1
    else {
     modDrugSum$SumCat$call=modDrugSum$SumCat$call[2]
@@ -171,14 +174,14 @@ output$ModelDets <- renderPrint({
  input$modelButton
  })
 
-#Tab2 MODELS-----
+#Tab 2.2 bivar graphs-----
 output$SummaryTab <- renderPrint({
  df.sum.cat2(df=Data(),x1(),x2(),y_cat(),by_var,random.eff)
 })
 
-#Tab3--------
 
-#subtab 3.1------
+
+#subtab 2.1------
 output$PhenGenPlot<- renderPlot({
  TitleStr3 <- switch(input$x1, 
                     "treat_full"="treatment group",
@@ -194,10 +197,9 @@ output$PhenGenPlot<- renderPlot({
  plots[[2]]
  plots[[1]]
  plots[[3]]
-},
-width = 1000, height = 500)
+},width = 1000, height = 500)
 
-#subtab 3.2------
+#subtab 2.2 ordination ------
 output$OrdiPlot<- renderPlot({
  input$ordiButton
  isolate({
@@ -220,8 +222,7 @@ output$OrdiPlot<- renderPlot({
   ordiellipse(nmds.temp, DataNorm()[[x1()]],draw="polygon",
               col=c("grey99"),label=TRUE,cex=0.6)
   })
- },
-width = 500, height = 500) 
+ },width = 500, height = 500) 
 
 # output$CommunitySim <- renderPrint({
 #  #collapse community data by x1 and x2 levels (e.g., day and cage)
@@ -229,7 +230,7 @@ width = 500, height = 500)
 #  #calculate richness and evenness
 #  
 # })
- #subtab 3.2------
+ #subtab 2.3 adonis mod ------
 #adonis model: use full dataset! have checkbox of what variables to add
  
  output$AdonisMod <- renderPrint({
@@ -248,25 +249,52 @@ width = 500, height = 500)
   adonisSum
  })
  })
-# 
 
-#CCA
-# x.po=cca(DataNorm[MarkVarList] ~ dia, data=DataNorm)
-# plot(x.po, display=c("bp","species"),type="text", 
-#      ylim=c(-5,3),xlim=c(-5,5),scaling=1,
-#      main=paste("CCA for criollos vs broiler vs chick, N=",nrow(dfPo)))
-# #       ordiellipse(x.po, dfPo.env$TipoAgeSmall,draw="polygon",col=c("grey99"),
-# #                   label=TRUE, kind="se", cex=0.5, )
-# anova(x.po)
+
+# subtab 3.3 mutivar model selection-------
+
+ #create formula from slectized inputs
+
+MVmod<-reactive({
+ MainVars=paste0(unique(fixed_main(),pheno_main()), collapse="+")
  
+ IntsInt=""
+ IntsTet=""
+ IntsTime=""
+ if(int1_int()==TRUE) IntsInt=paste0(pheno_main(), "*int1", collapse="+")
+ if(tetAB_int()==TRUE) IntsTet=paste0(pheno_main(), "*tetAB", collapse="+")
+ if(time_int()==TRUE) IntsTime=paste0(pheno_main(), "*dia", collapse="+")
+ DepVars=paste(MainVars, IntsInt,IntsTet,IntsTime, sep="+")
+ Formula=as.formula(paste("Res~",DepVars, REff()))
+ #calculate models 
+ MVmod=my.MVmod.list(Data(),formula=Formula, fixed_vars=fixed_main(),by_var,random.eff,random.effBig,odds_ratios=TRUE)
+ 
+})
+
+
+output$DredgeGraph <- renderPlot({
+ #compile FE graphs
+ FEplots<-llply(MVmod(), function(z){
+  if(class(z)=="list") z$FEPlot[[2]][[1]]
+ })
+ FEplots=FEplots[lapply(FEplots,length)>0]
+ args.list <- c(FEplots,list(ncol=2),main="ORs forbest models")
+ do.call(grid.arrange, args.list)
+},width=800, height=1000)
+
+#render outputs
+
+output$DredgeMod<- renderPrint({
+  out=llply(MVmod(), function(z){
+   if(class(z)=="list") z$bestModSum
+  })
+  out
+})
 
 
 
 
-
-
-
-#TAB4: data table
+#Tab3 data summary --------
 
 output$RawData <- renderDataTable({
  DataWide()

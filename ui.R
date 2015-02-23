@@ -9,7 +9,7 @@ shinyUI(fluidPage(
   
   #Sidebar panel------
   sidebarPanel(   
-   img(src="http://i2.cpcache.com/image/66672167_125x125.png",height=35,inline=TRUE),
+   img(src="http://i2.cpcache.com/image/66672167_125x125.png",height=150,inline=TRUE),
    h6("Filter Dataset"),
    selectInput("trial", 
               label = "Study (1a, 2a, 2b)",
@@ -38,14 +38,6 @@ shinyUI(fluidPage(
               inputId="class_ag",
               label = "Aggregate by class?",
               value = TRUE),
-  selectInput("x1", 
-              label = "Category",
-              choices = c( "dia","num_pollos", "litter","treat_full", "treat_water", "treat_feed","trial","int1", "tetAB", "qnrb", "tipo_muestra" ),
-              selected = "dia"),
-   selectInput("x2", 
-              label = "Grouping factor",
-              choices = c("dia", "num_pollos","tipo_muestra", "litter","int1", "tetAB", "qnrb"),
-              selected = "dia"),
  
  
   h6("Additional Filtering"),
@@ -91,7 +83,13 @@ shinyUI(fluidPage(
                                                    label="Right stack",
                                                    choices = c("genotype",
                                                                "phen_desc_class","gen_str" ),
-                                                   selected = "phen_desc_class"))
+                                                   selected = "phen_desc_class")),
+                                   selectInput("x1", label = "Category",choices = 
+                                                c( "dia","num_pollos", "litter",
+                                                   "treat_full", "treat_water", 
+                                                   "treat_feed","trial","int1", 
+                                                   "tetAB", "qnrb", "tipo_muestra" ),
+                                               selected = "dia")
                       )),
                       plotOutput("PhenGenPlot",inline=TRUE)
              ),
@@ -101,6 +99,12 @@ shinyUI(fluidPage(
                       actionButton("ordiButton",
                                    label= img(src="https://img0.etsystatic.com/031/0/7321014/il_fullxfull.617240932_tvru.jpg",
                                               height = 20, width = 20)),
+                      selectInput("x1", label = "Category",choices = 
+                                   c( "dia","num_pollos", "litter",
+                                      "treat_full", "treat_water", 
+                                      "treat_feed","trial","int1", 
+                                      "tetAB", "qnrb", "tipo_muestra" ),
+                                  selected = "dia"),
                       selectInput("ordi_var",
                                   label="Similarity variable",
                                   choices = c("Genotypic (jaccard)", 
@@ -141,12 +145,19 @@ shinyUI(fluidPage(
             tabsetPanel(
              tabPanel("Univariate plots and model",                     
                       withTags(div(class='row-fluid',
+                                   selectInput("x1", label = "Category",choices = 
+                                                c( "dia","num_pollos", "litter",
+                                                   "treat_full", "treat_water", 
+                                                   "treat_feed","trial","int1", 
+                                                   "tetAB", "qnrb", "tipo_muestra" ),
+                                               selected = "dia"),
                                    div(class='span5', 
                                        plotOutput("BarPlotSingle")),
                                    div(class='span5',conditionalPanel(condition = 
                                                                        "input.class_ag ==
                                                                       false",
-                                       plotOutput("DensPlot"))))), 
+                                       plotOutput("DensPlot"))
+                                       ))), 
                       #select the drug for which you want detailed model results
                       #if results not aggregated by class, choose classes
                       #button to recaulculate model
@@ -155,7 +166,7 @@ shinyUI(fluidPage(
                                    label=img(src="https://img0.etsystatic.com/031/0/7321014/il_fullxfull.617240932_tvru.jpg",
                                              height = 20, width = 20)
                       ),
-                      checkboxInput("nest",label="Nested REs specificaiton (1|RE1/RE2)?",value=FALSE),
+                      checkboxInput("nest",label="Nested REs specificaiton (1|RE1/RE2)?",value=TRUE),
                       selectInput("Drug", 
                               label = "Drug-specific model results (scroll to bottom)",
                               choices = c("Ampicillin", "Amoxicillin/clavulanate"
@@ -170,14 +181,25 @@ shinyUI(fluidPage(
                       verbatimTextOutput("ModelSum")
                       ),
              tabPanel("Bivariate plots", 
+                      
+                      selectInput("x1", label = "Category",choices = 
+                                   c( "dia","num_pollos", "litter",
+                                      "treat_full", "treat_water", 
+                                      "treat_feed","trial","int1", 
+                                      "tetAB", "qnrb", "tipo_muestra" ),
+                                  selected = "dia"),
+                      selectInput("x2", label = "Grouping factor",
+                                  choices = c("dia", "num_pollos","tipo_muestra", 
+                                              "litter","int1", "tetAB", "qnrb"),   
+                                  selected = "dia"),
                       selectInput("stacked",
                                     label="Bar chart type",
                                     choices = c("dodge","stack","fill" ),
                                     selected = "dodge"),
                        plotOutput("BarPlotDouble",inline=TRUE),
                        verbatimTextOutput("SummaryTab")
-                      ),
-             tabPanel("MV model selection", 
+                      )
+             ,tabPanel("MV model selection", 
                       selectInput("pheno_main", 
                                   label = "Select main effects:",
                                   multiple=TRUE,
@@ -185,16 +207,35 @@ shinyUI(fluidPage(
                                   choices = c("treat_full", "dia" ,"num_pollos", "litter"
                                               ,"tipo_muestra" ,"int1", "tetAB", "qnrb",
                                               "isolate_type", "trial" ),
-                                  selected = c("dia","treat_full", "num_pollos",
-                                               "int1", "tetAB"))
-                      #plotOutput("BarPlotDouble",inline=TRUE),
-                      #verbatimTextOutput("SummaryTab")
+                                  selected = c("dia","treat_full","num_pollos","int1", "tetAB", "qnrb")),
+                      selectInput("fixed_main", 
+                                  label = "Always include in models:",
+                                  multiple=TRUE,
+                                  selectize=TRUE,
+                                  choices = c("treat_full", "dia" ,"num_pollos", "litter"
+                                              ,"tipo_muestra" ,"int1", "tetAB", "qnrb",
+                                              "isolate_type", "trial" ),
+                                  selected = c("dia","treat_full")),
+                      checkboxInput("time_int",label="Interact w time?",value=TRUE),
+                      checkboxInput("tetAB_int",label="Interact w tetAB?",value=FALSE),
+                      checkboxInput("int1_int",label="Interact w int1?",value=FALSE),
+                      selectInput("REff", 
+                                  label = "Select random effects:",
+                                  choices = c("Random intercept by sample"= "(1|random.eff)",
+                                              "Random intercept by bird"= "(1|random.effBig)", 
+                                              "Nested intercept (1|bird/sample)"=
+                                               "(1|random.effBig/random.eff)"
+                                              )),
+                      h6("Note: models will take a while to run (1--20 mins)"),
+                      plotOutput("DredgeGraph",height=1200),
+                      verbatimTextOutput("DredgeMod")
+                      
              )
-             )
+             ,selected=3)
             ),
    tabPanel("RAW DATA", 
             dataTableOutput("RawData"))
-   ),
+   ,selected=2),
   width=10
   )
  )
