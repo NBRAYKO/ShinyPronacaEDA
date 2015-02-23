@@ -6,12 +6,14 @@ shinyUI(fluidPage(
  titlePanel("Pronaca exploratory data analysis" ),
  sidebarLayout(
   
+  
   #Sidebar panel------
   sidebarPanel(   
    img(src="http://i2.cpcache.com/image/66672167_125x125.png",height=35,inline=TRUE),
    h6("Filter Dataset"),
    selectInput("trial", 
               label = "Study (1a, 2a, 2b)",
+              
               choices = c("1a Tet/New", "2a Enro/New", "2b Enro/Old"),
               multiple=TRUE,
               selected = "2a Enro/New"),  
