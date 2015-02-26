@@ -9,7 +9,7 @@ shinyUI(fluidPage(
   
   #Sidebar panel------
   sidebarPanel(   
-   img(src="http://i2.cpcache.com/image/66672167_125x125.png",height=150,inline=TRUE),
+   img(src="http://i2.cpcache.com/image/66672167_125x125.png",height="auto", width="auto",inline=TRUE),
    h6("Filter Dataset"),
    selectInput("trial", 
               label = "Study (1a, 2a, 2b)",
@@ -233,8 +233,23 @@ shinyUI(fluidPage(
              )
              ,selected=3)
             ),
-   tabPanel("RAW DATA", 
-            dataTableOutput("RawData"))
+   tabPanel("DATA TABLES", 
+            tabsetPanel(
+             tabPanel("Sample counts",
+              h6("Produce sample counts:"),
+              selectInput("tab_vars", 
+                          label = "Select variables:",
+                          multiple=TRUE,
+                          selectize=TRUE,
+                          choices = c("isolate_type","tipo_muestra", "trial", "dia",
+                                      "treat_full" ,"num_pollos", "Res", "int1",
+                                      "tetAB", "qnrb"),
+                          selected = c("trial", "tipo_muestra","dia")),
+              tableOutput("SampleCounts")),
+             tabPanel("Sample counts",
+              h6("Raw data"),
+              dataTableOutput("RawData"))
+            )
    ,selected=2),
   width=10
   )

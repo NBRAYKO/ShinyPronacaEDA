@@ -4,6 +4,7 @@
 
 #laod packages
 libs <- c('perm','lme4','car','ez','MASS', 'scales', 'diptest','mixtools','arm','moments','ggdendro','rgeos','plyr', 'ggparallel','RColorBrewer', 'vegan','grid','gridExtra', 'sjPlot', 'MuMIn')
+#lapply(libs, install.packages, character.only = T)
 lapply(libs, require, character.only = T)
 source("RenseNieFwdSel.R")
 #################

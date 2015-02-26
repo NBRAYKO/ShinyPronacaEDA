@@ -36,6 +36,7 @@ shinyServer(function(input, output){
   int1_int<-reactive({input$int1_int})
   tetAB_int<-reactive({input$tetAB_int})
   REff<- reactive ({input$REff})
+  tab_vars<- reactive ({input$tab_vars})
   
   
   Data <- reactive({  
@@ -160,13 +161,13 @@ shinyServer(function(input, output){
                       "Streptomycin" = "Aminoglycoside", "Gentamicin" = "Aminoglycoside",
                       "Sulfisoxazole" = "Sulfonamide", "Trimethoprim" = "Sulfonamide")
   }
+  if(class(model[[Drug]])=="list") {
    modDrugSum=try(model[[Drug]]$ModCat$SumCat)
-
-  if(class(modDrugSum)=="try-error"|is.na(modDrugSum)) tab1
-   else {
-    modDrugSum$SumCat$call=modDrugSum$SumCat$call[2]
-    list(tab1, modDrugSum)   
-   }
+   modDrugSum$SumCat$call=modDrugSum$SumCat$call[2]
+   list(tab1, modDrugSum)  }
+  else{
+   list(tab1) 
+  }
     })
 
 output$ModelDets <- renderPrint({
@@ -298,6 +299,10 @@ output$DredgeMod<- renderPrint({
 
 output$RawData <- renderDataTable({
  DataWide()
+})
+output$SampleCounts <- renderTable({
+ ddply(Data(),tab_vars(),
+       summarise, Chickens=length(unique(pollo_id)),Samples = length(unique(sample_id)),Isolates =length(unique(id)))
 })
 
 })
