@@ -261,7 +261,7 @@ MVmod<-reactive({
  
  IntsInt=""
  IntsTet=""
- #IntsTime=""
+ IntsTime=""
  if(int1_int()==TRUE) IntsInt=paste0(pheno_main(), "*int1", collapse="+")
  if(tetAB_int()==TRUE) IntsTet=paste0(pheno_main(), "*tetAB", collapse="+")
  #if(time_int()==TRUE) IntsTime=paste0(pheno_main(), "*dia", collapse="+")
