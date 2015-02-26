@@ -161,7 +161,8 @@ shinyUI(fluidPage(
                       #select the drug for which you want detailed model results
                       #if results not aggregated by class, choose classes
                       #button to recaulculate model
-                      h6("Reset model"),
+                      h6("
+                         Reset model"),
                       actionButton("modelButton", 
                                    label=img(src="https://img0.etsystatic.com/031/0/7321014/il_fullxfull.617240932_tvru.jpg",
                                              height = 20, width = 20)
@@ -216,7 +217,7 @@ shinyUI(fluidPage(
                                               ,"tipo_muestra" ,"int1", "tetAB", "qnrb",
                                               "isolate_type", "trial" ),
                                   selected = c("dia","treat_full")),
-                      checkboxInput("time_int",label="Interact w time?",value=FALSE),
+                      #checkboxInput("time_int",label="Interact w time?",value=FALSE),
                       checkboxInput("tetAB_int",label="Interact w tetAB?",value=FALSE),
                       checkboxInput("int1_int",label="Interact w int1?",value=TRUE),
                       selectInput("REff", 

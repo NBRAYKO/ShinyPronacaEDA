@@ -32,7 +32,7 @@ shinyServer(function(input, output){
   range_y<-reactive({input$range_y})
   pheno_main<-reactive({input$pheno_main})
   fixed_main<-reactive({input$pheno_main})
-  time_int<-reactive({input$time_int})
+  #time_int<-reactive({input$time_int})
   int1_int<-reactive({input$int1_int})
   tetAB_int<-reactive({input$tetAB_int})
   REff<- reactive ({input$REff})
@@ -261,10 +261,10 @@ MVmod<-reactive({
  
  IntsInt=""
  IntsTet=""
- IntsTime=""
+ #IntsTime=""
  if(int1_int()==TRUE) IntsInt=paste0(pheno_main(), "*int1", collapse="+")
  if(tetAB_int()==TRUE) IntsTet=paste0(pheno_main(), "*tetAB", collapse="+")
- if(time_int()==TRUE) IntsTime=paste0(pheno_main(), "*dia", collapse="+")
+ #if(time_int()==TRUE) IntsTime=paste0(pheno_main(), "*dia", collapse="+")
  DepVars=paste(MainVars, IntsInt,IntsTet,IntsTime, sep="+")
  Formula=as.formula(paste("Res~",DepVars, REff()))
  #calculate models 
