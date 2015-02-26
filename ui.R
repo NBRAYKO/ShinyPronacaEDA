@@ -234,22 +234,18 @@ shinyUI(fluidPage(
              ,selected=3)
             ),
    tabPanel("DATA TABLES", 
-            tabsetPanel(
-             tabPanel("Sample counts",
-              h6("Produce sample counts:"),
-              selectInput("tab_vars", 
-                          label = "Select variables:",
-                          multiple=TRUE,
-                          selectize=TRUE,
-                          choices = c("isolate_type","tipo_muestra", "trial", "dia",
-                                      "treat_full" ,"num_pollos", "Res", "int1",
-                                      "tetAB", "qnrb"),
-                          selected = c("trial", "tipo_muestra","dia")),
-              tableOutput("SampleCounts")),
-             tabPanel("Sample counts",
-              h6("Raw data"),
-              dataTableOutput("RawData"))
-            )
+            h6("Produce sample counts:"),
+            selectInput("tab_vars", 
+                        label = "Select variables:",
+                        multiple=TRUE,
+                        selectize=TRUE,
+                        choices = c("isolate_type","tipo_muestra", "trial", "dia",
+                                    "treat_full" ,"num_pollos", "Res", "int1",
+                                    "tetAB", "qnrb"),
+                        selected = c("trial", "tipo_muestra","dia")),
+            tableOutput("SampleCounts"),
+            h6("Raw data"),
+            dataTableOutput("RawData"))
    ,selected=2),
   width=10
   )
